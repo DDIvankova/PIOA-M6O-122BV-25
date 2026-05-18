@@ -1,9 +1,9 @@
 ﻿## Описание проекта
 
-Объектно-ориентированная реализация in-memory базы данных на Python с поддержкой нескольких таблиц, полного набора CRUD операций и сортировки. В качестве предметной области выбрана **библиотечная система**.
+В качестве предметной области выбрана **библиотечная система**.
 
 ## Структура проекта
-PIOA-НомерГруппы/
+PIOA-122BV-25/
 │
 ├── src/
 │ └── db/
@@ -23,18 +23,6 @@ PIOA-НомерГруппы/
 │ └── test_tui.py # Тесты UI
 │
 └── README.md
-
-text
-
-### Назначение модулей
-
-| Файл | Назначение |
-|------|------------|
-| `errors.py` | Пользовательские исключения для различных ошибок |
-| `table.py` | Класс `Table` - реализация отдельной таблицы |
-| `memory.py` | Класс `InMemoryDatabase` - управление множеством таблиц |
-| `tui.py` | Класс `LibraryUI` - текстовый пользовательский интерфейс |
-| `__main__.py` | Точка входа, запуск интерфейса |
 
 ## Функциональность
 
@@ -64,18 +52,6 @@ text
    - Проверка наличия обязательных полей
    - Уникальность ID
 
-### Обработка ошибок
-
-Пользовательские исключения:
-- `DatabaseError` - базовое исключение
-- `TableNotFoundError` - таблица не найдена
-- `TableExistsError` - таблица уже существует
-- `RecordNotFoundError` - запись не найдена
-- `DuplicateIDError` - дублирующийся ID
-- `ValidationError` - ошибка валидации
-- `InvalidFieldError` - некорректное поле
-- `InvalidSortError` - ошибка сортировки
-
 ## Установка и запуск
 
 ### Требования
@@ -88,28 +64,20 @@ text
 python -m src.db
 Запуск тестов
 bash
-# Запуск всех тестов
 python -m unittest discover tests
 
-# Запуск конкретного тестового модуля
-python -m unittest tests.test_table
-python -m unittest tests.test_memory
-python -m unittest tests.test_tui
-
-# Запуск с покрытием (требуется pytest-cov)
-pip install pytest-cov
-pytest --cov=src --cov-report=term-missing
+# Запуск покрытия
+python -m pytest tests/--cov=src --cov-report=term 
 Покрытие тестами
 text
 Name                         Stmts   Miss  Cover
 ------------------------------------------------
 src/db/__init__.py               0      0   100%
-src/db/__main__.py               5      0   100%
-src/db/tui.py                  220     30    86%
+src/db/__main__.py               5      1   80%
 src/db/backend/__init__.py       0      0   100%
-src/db/backend/errors.py        19      0   100%
-src/db/backend/memory.py        46      0   100%
-src/db/backend/table.py         99      0   100%
+src/db/backend/errors.py        22      0   100%
+src/db/backend/memory.py        26      0   100%
+src/db/backend/table.py        113      5    96%
+src/db/tui.py                  365     57    84%
 ------------------------------------------------
-TOTAL                          389     30    92%
-Общее покрытие: 92% (превышает требуемые 80%)
+TOTAL                          531     63    88%

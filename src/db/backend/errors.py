@@ -1,10 +1,8 @@
 class DatabaseError(Exception):
-    """Базовое исключение для ошибок базы данных."""
     pass
 
 
 class TableError(DatabaseError):
-    """Базовое исключение для ошибок таблицы."""
     pass
 
 
