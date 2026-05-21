@@ -1,14 +1,9 @@
-"""
-Модуль текстового пользовательского интерфейса.
-Обеспечивает взаимодействие пользователя с БД через консоль.
-"""
+
 from datetime import date
 from typing import Optional, Any
 from .backend.memory import db, ValidationError, TableNotFoundError, RecordNotFoundError
 
 
-# Предметная область: Библиотека
-# Таблица: Книги
 BOOKS_SCHEMA = {
     'id': int,
     'title': str,
@@ -18,7 +13,6 @@ BOOKS_SCHEMA = {
     'is_available': bool
 }
 
-# Таблица: Читатели
 READERS_SCHEMA = {
     'id': int,
     'first_name': str,
@@ -27,7 +21,6 @@ READERS_SCHEMA = {
     'phone': str
 }
 
-# Таблица: Выдачи книг
 LOANS_SCHEMA = {
     'id': int,
     'book_id': int,
@@ -38,13 +31,11 @@ LOANS_SCHEMA = {
 
 
 def init_database() -> None:
-    """Инициализация базы данных с предустановленными таблицами."""
     try:
         db.create_table('books', BOOKS_SCHEMA)
         db.create_table('readers', READERS_SCHEMA)
         db.create_table('loans', LOANS_SCHEMA)
         
-        # Добавление тестовых данных
         db.create_record('books', {
             'title': 'Мастер и Маргарита',
             'author': 'Михаил Булгаков',
@@ -81,7 +72,6 @@ def init_database() -> None:
         })
         
     except ValidationError:
-        # Таблицы уже существуют
         pass
 
 
