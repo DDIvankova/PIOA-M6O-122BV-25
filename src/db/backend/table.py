@@ -1,14 +1,9 @@
-# src/db/backend/table.py - полная исправленная версия класса Table
-
 from typing import Any, Optional
 from copy import deepcopy
 from .errors import DuplicateIDError, ValidationError, RecordNotFoundError, InvalidFieldError, InvalidSortError
 
 
 class Table:
-    """
-    Класс таблицы базы данных.
-    """
     
     def __init__(
         self,
@@ -22,14 +17,9 @@ class Table:
         self._auto_increment = auto_increment
     
     def _get_next_id(self) -> int:
-        """
-        Получение следующего доступного ID.
-        Находит максимальный ID среди всех записей и возвращает max + 1.
-        """
         if not self._records:
             return 1
         
-        # Находим максимальный ID
         max_id = 0
         for record in self._records:
             record_id = record.get('id', 0)
@@ -39,8 +29,6 @@ class Table:
         return max_id + 1
     
     def _validate_record(self, record: dict[str, Any]) -> None:
-        """Валидация записи."""
-        # Проверка наличия всех полей
         for field, field_type in self._schema.items():
             if field not in record:
                 raise ValidationError(
@@ -52,7 +40,6 @@ class Table:
                     f"получен {type(record[field]).__name__}"
                 )
         
-        # Проверка отсутствия лишних полей
         for field in record:
             if field not in self._schema:
                 raise ValidationError(
@@ -60,29 +47,22 @@ class Table:
                 )
     
     def create(self, record: dict[str, Any]) -> dict[str, Any]:
-        """
-        Добавление новой записи.
-        """
         record_copy = deepcopy(record)
         
-        # Автоматическая генерация ID, если не указан и автоинкремент включен
         if self._auto_increment and 'id' not in record_copy:
             record_copy['id'] = self._get_next_id()
         elif 'id' in record_copy:
-            # Если ID указан, проверяем что он не занят
             if any(r['id'] == record_copy['id'] for r in self._records):
                 raise DuplicateIDError(
                     f"Запись с id={record_copy['id']} уже существует в таблице '{self.name}'"
                 )
         
-        # Валидация
         self._validate_record(record_copy)
         
         self._records.append(record_copy)
         return deepcopy(record_copy)
     
     def find(self, record_id: Any) -> Optional[dict[str, Any]]:
-        """Поиск записи по ID."""
         for record in self._records:
             if record['id'] == record_id:
                 return deepcopy(record)
@@ -96,10 +76,8 @@ class Table:
         limit: Optional[int] = None,
         offset: int = 0
     ) -> list[dict[str, Any]]:
-        """Выборка записей с фильтрацией и сортировкой."""
         result = deepcopy(self._records)
         
-        # Применение фильтров
         if filters:
             filtered_result = []
             for record in result:
@@ -112,7 +90,6 @@ class Table:
                     filtered_result.append(record)
             result = filtered_result
         
-        # Сортировка
         if sort_by:
             if sort_by not in self._schema:
                 raise InvalidFieldError(
@@ -126,7 +103,6 @@ class Table:
                     f"Невозможно отсортировать по полю '{sort_by}': {e}"
                 )
         
-        # Пагинация
         if limit:
             result = result[offset:offset + limit]
         elif offset:
@@ -135,8 +111,6 @@ class Table:
         return result
     
     def update(self, record_id: Any, updates: dict[str, Any]) -> dict[str, Any]:
-        """Обновление записи по ID."""
-        # Поиск индекса записи
         record_index = None
         for i, record in enumerate(self._records):
             if record['id'] == record_id:
@@ -148,25 +122,21 @@ class Table:
                 f"Запись с id={record_id} не найдена в таблице '{self.name}'"
             )
         
-        # Создание обновленной записи
         updated_record = deepcopy(self._records[record_index])
         updated_record.update(updates)
         
-        # Проверка ID на уникальность (если ID изменился)
         if updates.get('id') and updates['id'] != record_id:
             if any(r['id'] == updated_record['id'] for r in self._records if r['id'] != record_id):
                 raise DuplicateIDError(
                     f"Запись с id={updated_record['id']} уже существует в таблице '{self.name}'"
                 )
         
-        # Валидация
         self._validate_record(updated_record)
         
         self._records[record_index] = updated_record
         return deepcopy(updated_record)
     
     def delete(self, record_id: Any) -> dict[str, Any]:
-        """Удаление записи по ID."""
         record_index = None
         for i, record in enumerate(self._records):
             if record['id'] == record_id:
@@ -183,7 +153,6 @@ class Table:
         return deleted_record
     
     def delete_by_filter(self, filters: dict[str, Any]) -> list[dict[str, Any]]:
-        """Удаление записей по фильтру."""
         records_to_delete = self.select(filters)
         deleted_records = []
         
@@ -194,21 +163,17 @@ class Table:
         return deleted_records
     
     def clear(self) -> int:
-        """Очистка таблицы."""
         deleted_count = len(self._records)
         self._records = []
         return deleted_count
     
     def get_all(self) -> list[dict[str, Any]]:
-        """Получение всех записей."""
         return deepcopy(self._records)
     
     @property
     def record_count(self) -> int:
-        """Количество записей."""
         return len(self._records)
     
     @property
     def schema(self) -> dict[str, type]:
-        """Схема таблицы."""
         return self._schema.copy()

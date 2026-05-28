@@ -1,7 +1,3 @@
-"""
-Модуль объектно-ориентированного текстового пользовательского интерфейса.
-"""
-
 from typing import Any, Optional
 from datetime import date
 from .backend.memory import InMemoryDatabase
@@ -13,18 +9,12 @@ from .backend.errors import (
 
 
 class LibraryUI:
-    """
-    Класс текстового пользовательского интерфейса библиотечной системы.
-    """
     
     def __init__(self):
-        """Инициализация UI и базы данных."""
         self.db = InMemoryDatabase()
         self._init_database()
     
     def _init_database(self) -> None:
-        """Инициализация базы данных с таблицами и тестовыми данными."""
-        # Схема таблицы книг
         books_schema = {
             'id': int,
             'title': str,
@@ -34,7 +24,6 @@ class LibraryUI:
             'is_available': bool
         }
         
-        # Схема таблицы читателей
         readers_schema = {
             'id': int,
             'first_name': str,
@@ -43,7 +32,6 @@ class LibraryUI:
             'phone': str
         }
         
-        # Схема таблицы выдач
         loans_schema = {
             'id': int,
             'book_id': int,
@@ -52,18 +40,14 @@ class LibraryUI:
             'return_date': Optional[str]
         }
         
-        # Создание таблиц
         self.books = self.db.create_table('books', books_schema)
         self.readers = self.db.create_table('readers', readers_schema)
         self.loans = self.db.create_table('loans', loans_schema)
         
-        # Добавление тестовых данных
         self._add_test_data()
     
     def _add_test_data(self) -> None:
-        """Добавление тестовых данных."""
         try:
-            # Книги
             self.books.create({
                 'title': 'Мастер и Маргарита',
                 'author': 'Михаил Булгаков',
@@ -93,7 +77,6 @@ class LibraryUI:
                 'is_available': True
             })
             
-            # Читатели
             self.readers.create({
                 'first_name': 'Иван',
                 'last_name': 'Петров',
@@ -108,25 +91,21 @@ class LibraryUI:
             })
             
         except (ValidationError, DuplicateIDError):
-            pass  # Данные уже существуют
+            pass
     
     def _print_header(self, text: str) -> None:
-        """Вывод заголовка."""
         print("\n" + "=" * 50)
         print(f"  {text}")
         print("=" * 50)
     
     def _print_separator(self) -> None:
-        """Вывод разделителя."""
         print("-" * 50)
     
     def _print_record(self, record: dict[str, Any]) -> None:
-        """Вывод одной записи."""
         for key, value in record.items():
             if key == 'id':
                 print(f"  #{value}")
             else:
-                # Форматирование булевых значений
                 if isinstance(value, bool):
                     value = "Да" if value else "Нет"
                 print(f"  {key}: {value}")
@@ -137,7 +116,6 @@ class LibraryUI:
         records: list[dict[str, Any]],
         title: str = "Записи"
     ) -> None:
-        """Вывод списка записей."""
         self._print_header(title)
         if not records:
             print("  Записи не найдены.")
@@ -146,7 +124,6 @@ class LibraryUI:
                 self._print_record(record)
     
     def _read_int(self, prompt: str) -> int:
-        """Чтение целого числа."""
         while True:
             try:
                 return int(input(prompt).strip())
@@ -154,7 +131,6 @@ class LibraryUI:
                 print("Ошибка: введите целое число.")
     
     def _read_optional_int(self, prompt: str) -> Optional[int]:
-        """Чтение опционального целого числа."""
         value = input(prompt).strip()
         if value == "":
             return None
@@ -165,7 +141,6 @@ class LibraryUI:
             return None
     
     def _read_bool(self, prompt: str) -> bool:
-        """Чтение булевого значения."""
         while True:
             value = input(prompt).strip().lower()
             if value in ('да', 'yes', 'true', '1', '+'):
@@ -175,12 +150,10 @@ class LibraryUI:
             print("Ошибка: введите 'да' или 'нет'")
     
     def _read_optional_str(self, prompt: str) -> Optional[str]:
-        """Чтение опциональной строки."""
         value = input(prompt).strip()
         return value if value else None
     
     def _read_sort_options(self) -> tuple[Optional[str], bool]:
-        """Чтение параметров сортировки."""
         sort_by = self._read_optional_str("Сортировать по полю (Enter - без сортировки): ")
         if not sort_by:
             return None, False
@@ -190,7 +163,6 @@ class LibraryUI:
         return sort_by, reverse
     
     def _add_book(self) -> None:
-        """Добавление книги."""
         print("\n--- Добавление книги ---")
         
         record = {
@@ -205,7 +177,6 @@ class LibraryUI:
         print(f"\nКнига успешно добавлена (ID: {result['id']})")
     
     def _add_reader(self) -> None:
-        """Добавление читателя."""
         print("\n--- Добавление читателя ---")
         
         record = {
@@ -219,7 +190,6 @@ class LibraryUI:
         print(f"\nЧитатель успешно добавлен (ID: {result['id']})")
     
     def _add_loan(self) -> None:
-        """Добавление выдачи книги."""
         print("\n--- Добавление выдачи ---")
         
         book_id = self._read_int("ID книги: ")
@@ -235,14 +205,12 @@ class LibraryUI:
         result = self.loans.create(record)
         print(f"\nВыдача успешно добавлена (ID: {result['id']})")
         
-        # Обновляем статус книги
         try:
             self.books.update(book_id, {'is_available': False})
         except RecordNotFoundError:
             print(f"Внимание: книга с ID {book_id} не найдена")
     
     def _view_books(self) -> None:
-        """Просмотр книг с фильтрацией и сортировкой."""
         print("\n--- Фильтрация книг ---")
         print("Оставьте поле пустым, чтобы пропустить фильтр")
         
@@ -281,7 +249,6 @@ class LibraryUI:
             print(f"Ошибка: {e}")
     
     def _view_readers(self) -> None:
-        """Просмотр читателей с фильтрацией и сортировкой."""
         print("\n--- Фильтрация читателей ---")
         print("Оставьте поле пустым, чтобы пропустить фильтр")
         
@@ -312,7 +279,6 @@ class LibraryUI:
             print(f"Ошибка: {e}")
     
     def _view_loans(self) -> None:
-        """Просмотр выдач с фильтрацией."""
         print("\n--- Фильтрация выдач ---")
         print("Оставьте поле пустым, чтобы пропустить фильтр")
         
@@ -328,7 +294,6 @@ class LibraryUI:
         
         records = self.loans.select(filters if filters else None)
         
-        # Обогащаем данными о книгах и читателях
         enriched_records = []
         for loan in records:
             enriched = loan.copy()
@@ -343,7 +308,6 @@ class LibraryUI:
         self._print_records(enriched_records, "Выдачи книг")
     
     def _update_book(self) -> None:
-        """Обновление книги."""
         record_id = self._read_int("ID книги: ")
         
         book = self.books.find(record_id)
@@ -373,7 +337,6 @@ class LibraryUI:
             print("Нет изменений")
     
     def _update_reader(self) -> None:
-        """Обновление читателя."""
         record_id = self._read_int("ID читателя: ")
         
         reader = self.readers.find(record_id)
@@ -397,7 +360,6 @@ class LibraryUI:
             print("Нет изменений")
     
     def _delete_book(self) -> None:
-        """Удаление книги."""
         record_id = self._read_int("ID книги: ")
         
         book = self.books.find(record_id)
@@ -413,7 +375,6 @@ class LibraryUI:
             deleted = self.books.delete(record_id)
             print(f"Книга ID {deleted['id']} успешно удалена")
             
-            # Удаляем связанные выдачи
             related_loans = self.loans.delete_by_filter({'book_id': record_id})
             if related_loans:
                 print(f"Удалено связанных выдач: {len(related_loans)}")
@@ -421,7 +382,6 @@ class LibraryUI:
             print("Удаление отменено")
     
     def _delete_reader(self) -> None:
-        """Удаление читателя."""
         record_id = self._read_int("ID читателя: ")
         
         reader = self.readers.find(record_id)
@@ -437,7 +397,6 @@ class LibraryUI:
             deleted = self.readers.delete(record_id)
             print(f"Читатель ID {deleted['id']} успешно удален")
             
-            # Удаляем связанные выдачи
             related_loans = self.loans.delete_by_filter({'reader_id': record_id})
             if related_loans:
                 print(f"Удалено связанных выдач: {len(related_loans)}")
@@ -445,7 +404,6 @@ class LibraryUI:
             print("Удаление отменено")
     
     def _return_book(self) -> None:
-        """Возврат книги."""
         self._print_header("Возврат книги")
         
         try:
@@ -475,7 +433,6 @@ class LibraryUI:
         input("\nНажмите Enter для продолжения...")
     
     def _print_main_menu(self) -> None:
-        """Вывод главного меню."""
         print("\n" + "=" * 50)
         print("  БИБЛИОТЕЧНАЯ СИСТЕМА (In-Memory Database)")
         print("=" * 50)
@@ -488,7 +445,6 @@ class LibraryUI:
         print("=" * 50)
     
     def _add_record_menu(self) -> None:
-        """Меню добавления записи."""
         self._print_header("Добавление записи")
         
         print("Выберите таблицу:")
@@ -513,7 +469,6 @@ class LibraryUI:
         input("\nНажмите Enter для продолжения...")
     
     def _view_records_menu(self) -> None:
-        """Меню просмотра записей."""
         self._print_header("Просмотр записей")
         
         print("Выберите таблицу:")
@@ -545,7 +500,6 @@ class LibraryUI:
         input("\nНажмите Enter для продолжения...")
     
     def _update_record_menu(self) -> None:
-        """Меню обновления записи."""
         self._print_header("Обновление записи")
         
         print("Выберите таблицу:")
@@ -567,7 +521,6 @@ class LibraryUI:
         input("\nНажмите Enter для продолжения...")
     
     def _delete_record_menu(self) -> None:
-        """Меню удаления записи."""
         self._print_header("Удаление записи")
         
         print("Выберите таблицу:")
@@ -589,7 +542,6 @@ class LibraryUI:
         input("\nНажмите Enter для продолжения...")
     
     def run(self) -> None:
-        """Запуск основного цикла программы."""
         print("\nДобро пожаловать в библиотечную систему!")
         
         while True:
@@ -615,6 +567,5 @@ class LibraryUI:
 
 
 def run() -> None:
-    """Функция запуска UI (совместимость со старой точкой входа)."""
     ui = LibraryUI()
     ui.run()
