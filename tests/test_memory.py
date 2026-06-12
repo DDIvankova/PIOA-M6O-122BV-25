@@ -3,7 +3,11 @@ from unittest.mock import patch
 import sys
 import os
 from src.db.backend.memory import MemoryDatabase
-from src.db.backend.errors import TableNotFoundError, TableExistsError, RecordNotFoundError
+from src.db.backend.errors import (
+    TableNotFoundError,
+    TableExistsError,
+    RecordNotFoundError,
+)
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -51,7 +55,7 @@ class TestMemoryDatabase(unittest.TestCase):
         self.db.insert_record("users", {"name": "Charlie", "age": 30})
         self.db.insert_record("users", {"name": "Alice", "age": 25})
         self.db.insert_record("users", {"name": "Bob", "age": 35})
-        
+
         records = self.db.select_records("users", sort_by="name")
         names = [r["name"] for r in records]
         self.assertEqual(names, ["Alice", "Bob", "Charlie"])
@@ -95,37 +99,41 @@ class TestMemoryDatabase(unittest.TestCase):
 
 
 class TestMainCoverage(unittest.TestCase):
-    @patch('src.db.__main__.run')
+    @patch("src.db.__main__.run")
     def test_main_calls_run(self, mock_run):
         from src.db.__main__ import main
+
         main()
         mock_run.assert_called_once()
 
-    @patch('src.db.__main__.run')
+    @patch("src.db.__main__.run")
     def test_main_calls_run_only_once(self, mock_run):
         from src.db.__main__ import main
+
         main()
         self.assertEqual(mock_run.call_count, 1)
 
     def test_module_has_main_function(self):
         import src.db.__main__ as main_module
-        self.assertTrue(hasattr(main_module, 'main'))
+
+        self.assertTrue(hasattr(main_module, "main"))
         self.assertTrue(callable(main_module.main))
 
     def test_module_has_run_import(self):
         import src.db.__main__ as main_module
-        self.assertTrue(hasattr(main_module, 'run'))
 
-    @patch('src.db.__main__.run')
+        self.assertTrue(hasattr(main_module, "run"))
+
+    @patch("src.db.__main__.run")
     def test_main_executes_without_errors(self, mock_run):
         from src.db.__main__ import main
+
         try:
             main()
         except Exception as e:
             self.fail(f"main() вызвал исключение: {e}")
 
     def test_import_main_module(self):
-        import src.db.__main__
         self.assertTrue(True)
 
 

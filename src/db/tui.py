@@ -232,20 +232,25 @@ class LibraryUI:
         print("\n--- Добавление выдачи ---")
         book_id = self._read_int("ID книги: ")
         reader_id = self._read_int("ID читателя: ")
-        
-        book = self.db.select_records('books', {'id': book_id})
+
+        book = self.db.select_records("books", {"id": book_id})
         if not book:
             print(f"Ошибка: Книга с ID {book_id} не найдена")
-        elif not book[0].get('is_available', True):
+        elif not book[0].get("is_available", True):
             print(f"Ошибка: Книга '{book[0].get('title', 'Unknown')}' уже выдана")
-        elif not self.db.select_records('readers', {'id': reader_id}):
+        elif not self.db.select_records("readers", {"id": reader_id}):
             print(f"Ошибка: Читатель с ID {reader_id} не найден")
         else:
-            record = {'book_id': book_id, 'reader_id': reader_id, 'loan_date': str(date.today()), 'return_date': None}
-            result = self.db.insert_record('loans', record)
+            record = {
+                "book_id": book_id,
+                "reader_id": reader_id,
+                "loan_date": str(date.today()),
+                "return_date": None,
+            }
+            result = self.db.insert_record("loans", record)
             print(f"\nВыдача успешно добавлена (ID: {result['id']})")
-            self.db.update_record('books', book_id, {'is_available': False})
-        
+            self.db.update_record("books", book_id, {"is_available": False})
+
         input("\nНажмите Enter для продолжения...")
 
     def _view_books(self):

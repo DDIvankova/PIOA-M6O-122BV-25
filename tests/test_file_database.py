@@ -70,7 +70,7 @@ class TestFileDatabase(unittest.TestCase):
         db1 = FileDatabase(self.temp_dir)
         db1.create_table("users", schema)
         db1.insert_record("users", {"name": "John", "age": 30})
-        
+
         db2 = FileDatabase(self.temp_dir)
         records = db2.select_records("users")
         self.assertEqual(len(records), 1)
@@ -98,7 +98,7 @@ class TestFileDatabase(unittest.TestCase):
         self.db.create_table("users", schema)
         file_path = os.path.join(self.temp_dir, "users.json")
         self.assertTrue(os.path.exists(file_path))
-        
+
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         self.assertIn("schema", data)
