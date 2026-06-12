@@ -1,0 +1,10 @@
+{
+  "schema": {
+    "id": "int",
+    "book_id": "int",
+    "reader_id": "int",
+    "loan_date": "str",
+    "return_date": "Union"
+  },
+  "records": []
+}
