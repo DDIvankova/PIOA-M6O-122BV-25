@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 from typing import Any
-from copy import deepcopy
 from .database import Database
 from .errors import (
     TableNotFoundError,
@@ -24,13 +23,15 @@ class FileDatabase(Database):
     def _get_table_path(self, table_name: str) -> Path:
         return self.directory / f"{table_name}.json"
 
-    def _table_exists(self, table_name: str) -> bool:
+    def table_exists(self, table_name: str) -> bool:
         return self._get_table_path(table_name).exists()
 
     def _load_table_from_file(self, table_name: str) -> Table:
         table_path = self._get_table_path(table_name)
+
         if not table_path.exists():
             raise TableNotFoundError(f"Таблица '{table_name}' не существует")
+
         try:
             with table_path.open("r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -40,10 +41,12 @@ class FileDatabase(Database):
             )
         except OSError as e:
             raise StorageError(f"Ошибка при чтении файла '{table_name}': {e}")
+
         if "schema" not in data or "records" not in data:
             raise InvalidStorageDataError(
                 f"Файл таблицы '{table_name}' имеет некорректную структуру"
             )
+
         schema = {}
         for field_name, field_type in data["schema"].items():
             if field_type == "int":
@@ -53,18 +56,30 @@ class FileDatabase(Database):
             elif field_type == "bool":
                 schema[field_name] = bool
             else:
-                schema[field_name] = str
+                raise InvalidStorageDataError(
+                    f"Неизвестный тип поля '{field_name}': {field_type}"
+                )
+
         table = Table(table_name, schema)
+        restored_records = []
+
         for record in data["records"]:
+            converted_record = {}
             for key, value in record.items():
-                if key in schema and schema[key] is int:
-                    record[key] = int(value) if value is not None else None
-                elif key in schema and schema[key] is bool:
-                    record[key] = bool(value) if value is not None else False
-            table._records.append(deepcopy(record))
-        if table._records:
-            max_id = max(r.get("id", 0) for r in table._records)
-            table._next_id = max_id + 1
+                try:
+                    if key in schema and schema[key] is int:
+                        converted_record[key] = int(value) if value is not None else None
+                    elif key in schema and schema[key] is bool:
+                        converted_record[key] = bool(value) if value is not None else False
+                    else:
+                        converted_record[key] = value
+                except (TypeError, ValueError) as e:
+                    raise InvalidStorageDataError(
+                        f"Некорректное значение поля '{key}' в таблице '{table_name}': {e}"
+                    )
+            restored_records.append(converted_record)
+
+        table.restore_records(restored_records)
         return table
 
     def _save_table_to_file(self, table_name: str, table: Table) -> None:
@@ -80,7 +95,7 @@ class FileDatabase(Database):
             raise StorageError(f"Ошибка при сохранении таблицы '{table_name}': {e}")
 
     def create_table(self, table_name: str, schema: dict[str, type]) -> None:
-        if self._table_exists(table_name):
+        if self.table_exists(table_name):
             raise TableExistsError(f"Таблица '{table_name}' уже существует")
         table = Table(table_name, schema)
         self._save_table_to_file(table_name, table)

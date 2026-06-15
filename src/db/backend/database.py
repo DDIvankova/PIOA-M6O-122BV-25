@@ -8,6 +8,14 @@ class Database(ABC):
         pass
 
     @abstractmethod
+    def drop_table(self, table_name: str) -> None:
+        pass
+
+    @abstractmethod
+    def table_exists(self, table_name: str) -> bool:
+        pass
+
+    @abstractmethod
     def insert_record(self, table_name: str, record: dict[str, Any]) -> dict[str, Any]:
         pass
 

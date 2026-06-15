@@ -155,6 +155,21 @@ class Table:
         deleted_count = len(self._records)
         self._records = []
         return deleted_count
+    def restore_records(self, records: list[dict[str, Any]]) -> None:
+        restored_records = []
+
+        for record in records:
+            self._validate_record(record)
+            restored_records.append(deepcopy(record))
+
+        self._records = restored_records
+
+        if self._records:
+            self._next_id = max(
+                record["id"] for record in self._records
+            ) + 1
+        else:
+            self._next_id = 1
 
     def get_all(self) -> list[dict[str, Any]]:
         return deepcopy(self._records)
