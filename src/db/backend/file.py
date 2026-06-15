@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, Type
 from .database import Database
 from .errors import (
     TableNotFoundError,
@@ -14,7 +14,7 @@ from .table import Table
 class FileDatabase(Database):
     def __init__(self, directory: str = "data"):
         self.directory = Path(directory)
-        self._tables_cache: dict[str, Table] = {}
+        self._tables_cache: Dict[str, Table] = {}
         try:
             self.directory.mkdir(parents=True, exist_ok=True)
         except OSError as e:
@@ -47,7 +47,7 @@ class FileDatabase(Database):
                 f"Файл таблицы '{table_name}' имеет некорректную структуру"
             )
 
-        schema = {}
+        schema: Dict[str, Type] = {}
         for field_name, field_type in data["schema"].items():
             if field_type == "int":
                 schema[field_name] = int
@@ -64,13 +64,18 @@ class FileDatabase(Database):
         restored_records = []
 
         for record in data["records"]:
-            converted_record = {}
+            converted_record: Dict[str, Any] = {}
             for key, value in record.items():
                 try:
-                    if key in schema and schema[key] is int:
-                        converted_record[key] = int(value) if value is not None else None
-                    elif key in schema and schema[key] is bool:
-                        converted_record[key] = bool(value) if value is not None else False
+                    field_type = schema.get(key)
+                    if field_type is int:
+                        converted_record[key] = (
+                            int(value) if value is not None else None
+                        )
+                    elif field_type is bool:
+                        converted_record[key] = (
+                            bool(value) if value is not None else False
+                        )
                     else:
                         converted_record[key] = value
                 except (TypeError, ValueError) as e:
@@ -84,7 +89,7 @@ class FileDatabase(Database):
 
     def _save_table_to_file(self, table_name: str, table: Table) -> None:
         table_path = self._get_table_path(table_name)
-        schema_info = {}
+        schema_info: Dict[str, str] = {}
         for field_name, field_type in table.schema.items():
             schema_info[field_name] = field_type.__name__
         data = {"schema": schema_info, "records": table.get_all()}
@@ -94,14 +99,14 @@ class FileDatabase(Database):
         except OSError as e:
             raise StorageError(f"Ошибка при сохранении таблицы '{table_name}': {e}")
 
-    def create_table(self, table_name: str, schema: dict[str, type]) -> None:
+    def create_table(self, table_name: str, schema: Dict[str, Type]) -> None:
         if self.table_exists(table_name):
             raise TableExistsError(f"Таблица '{table_name}' уже существует")
         table = Table(table_name, schema)
         self._save_table_to_file(table_name, table)
         self._tables_cache[table_name] = table
 
-    def insert_record(self, table_name: str, record: dict[str, Any]) -> dict[str, Any]:
+    def insert_record(self, table_name: str, record: Dict[str, Any]) -> Dict[str, Any]:
         table = self._load_table_from_file(table_name)
         result = table.create(record)
         self._save_table_to_file(table_name, table)
@@ -111,23 +116,23 @@ class FileDatabase(Database):
     def select_records(
         self,
         table_name: str,
-        filters: dict[str, Any] | None = None,
+        filters: Dict[str, Any] | None = None,
         sort_by: str | None = None,
         reverse: bool = False,
-    ) -> list[dict[str, Any]]:
+    ) -> list[Dict[str, Any]]:
         table = self._load_table_from_file(table_name)
         return table.select(filters, sort_by, reverse)
 
     def update_record(
-        self, table_name: str, record_id: Any, updates: dict[str, Any]
-    ) -> dict[str, Any]:
+        self, table_name: str, record_id: Any, updates: Dict[str, Any]
+    ) -> Dict[str, Any]:
         table = self._load_table_from_file(table_name)
         result = table.update(record_id, updates)
         self._save_table_to_file(table_name, table)
         self._tables_cache[table_name] = table
         return result
 
-    def delete_record(self, table_name: str, record_id: Any) -> dict[str, Any]:
+    def delete_record(self, table_name: str, record_id: Any) -> Dict[str, Any]:
         table = self._load_table_from_file(table_name)
         result = table.delete(record_id)
         self._save_table_to_file(table_name, table)

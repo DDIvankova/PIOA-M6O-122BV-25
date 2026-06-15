@@ -8,7 +8,11 @@ from itertools import chain, repeat
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from src.db.tui import LibraryUI
-from src.db.backend.errors import RecordNotFoundError, DuplicateIDError, InvalidFieldError
+from src.db.backend.errors import (
+    RecordNotFoundError,
+    DuplicateIDError,
+    InvalidFieldError,
+)
 
 
 class MockDatabase:
@@ -16,14 +20,40 @@ class MockDatabase:
         self._id_counter = 1000
         self.tables = {
             "books": [
-                {"id": 1, "title": "Мастер и Маргарита", "author": "Булгаков", "year": 1967, "genre": "Роман", "is_available": True},
-                {"id": 2, "title": "1984", "author": "Оруэлл", "year": 1949, "genre": "Антиутопия", "is_available": False},
+                {
+                    "id": 1,
+                    "title": "Мастер и Маргарита",
+                    "author": "Булгаков",
+                    "year": 1967,
+                    "genre": "Роман",
+                    "is_available": True,
+                },
+                {
+                    "id": 2,
+                    "title": "1984",
+                    "author": "Оруэлл",
+                    "year": 1949,
+                    "genre": "Антиутопия",
+                    "is_available": False,
+                },
             ],
             "readers": [
-                {"id": 1, "first_name": "Иван", "last_name": "Петров", "email": "ivan@test.com", "phone": "+7-123"},
+                {
+                    "id": 1,
+                    "first_name": "Иван",
+                    "last_name": "Петров",
+                    "email": "ivan@test.com",
+                    "phone": "+7-123",
+                },
             ],
             "loans": [
-                {"id": 1, "book_id": 2, "reader_id": 1, "loan_date": "2024-06-10", "return_date": None},
+                {
+                    "id": 1,
+                    "book_id": 2,
+                    "reader_id": 1,
+                    "loan_date": "2024-06-10",
+                    "return_date": None,
+                },
             ],
         }
 
@@ -32,7 +62,9 @@ class MockDatabase:
             self.tables[name] = []
 
     def insert_record(self, table_name, record):
-        if "id" in record and any(r["id"] == record["id"] for r in self.tables[table_name]):
+        if "id" in record and any(
+            r["id"] == record["id"] for r in self.tables[table_name]
+        ):
             raise DuplicateIDError(f"ID {record['id']} уже существует")
         new_id = self._id_counter
         self._id_counter += 1
@@ -107,14 +139,20 @@ class TestLibraryUIFull(unittest.TestCase):
         self.assertFalse(self.ui._read_bool("Вопрос: "))
         self.assertTrue(self.ui._read_bool("Вопрос: "))
 
-    @patch("builtins.input", side_effect=["Test Book", "Test Author", "2025", "Sci-Fi", "да"])
+    @patch(
+        "builtins.input",
+        side_effect=["Test Book", "Test Author", "2025", "Sci-Fi", "да"],
+    )
     def test_add_book_success(self, mock_input):
         initial_count = len(self.ui.db.tables["books"])
         with patch("sys.stdout", new_callable=StringIO):
             self.ui._add_book()
         self.assertEqual(len(self.ui.db.tables["books"]), initial_count + 1)
 
-    @patch("builtins.input", side_effect=["Test Reader", "Testov", "test@mail.ru", "+7-999"])
+    @patch(
+        "builtins.input",
+        side_effect=["Test Reader", "Testov", "test@mail.ru", "+7-999"],
+    )
     def test_add_reader_success(self, mock_input):
         initial_count = len(self.ui.db.tables["readers"])
         with patch("sys.stdout", new_callable=StringIO):
@@ -135,7 +173,9 @@ class TestLibraryUIFull(unittest.TestCase):
         self.assertIn("1984", output)
         self.assertNotIn("Мастер и Маргарита", output)
 
-    @patch("builtins.input", side_effect=["1", "Новое название", "", "", ""] + [""] * 20)
+    @patch(
+        "builtins.input", side_effect=["1", "Новое название", "", "", ""] + [""] * 20
+    )
     def test_update_book_success(self, mock_input):
         books = self.ui.db.select_records("books")
         book = next((b for b in books if b["id"] == 1), None)
@@ -236,7 +276,10 @@ class TestLibraryUIFull(unittest.TestCase):
             self.ui._view_loans()
             self.assertIn("Выдачи книг", out.getvalue())
 
-    @patch("builtins.input", side_effect=["1", "Петр", "Сидоров", "new@test.com", "+799999999"])
+    @patch(
+        "builtins.input",
+        side_effect=["1", "Петр", "Сидоров", "new@test.com", "+799999999"],
+    )
     def test_update_reader(self, mock_input):
         self.ui._update_reader()
         reader = self.ui.db.select_records("readers", {"id": 1})[0]

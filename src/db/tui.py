@@ -202,7 +202,12 @@ class LibraryUI:
         if not sort_by:
             return None, False
         order = self._read_optional_str("Порядок (возр/уб): ")
-        reverse = order and order.lower() in ("уб", "убыв", "desc", "убывание")
+        reverse = order is not None and order.lower() in (
+            "уб",
+            "убыв",
+            "desc",
+            "убывание",
+        )
         return sort_by, reverse
 
     def _add_book(self):
@@ -446,7 +451,7 @@ class LibraryUI:
 
     def _print_main_menu(self):
         print("\n" + "=" * 50)
-        print("  БИБЛИОТЕЧНАЯ СИСТЕМА (In-Memory Database)")
+        print("  БИБЛИОТЕЧНАЯ СИСТЕМА")
         print("=" * 50)
         print("1. Добавить запись")
         print("2. Просмотр записей")

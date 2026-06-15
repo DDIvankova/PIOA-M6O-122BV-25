@@ -155,6 +155,7 @@ class Table:
         deleted_count = len(self._records)
         self._records = []
         return deleted_count
+
     def restore_records(self, records: list[dict[str, Any]]) -> None:
         restored_records = []
 
@@ -165,9 +166,7 @@ class Table:
         self._records = restored_records
 
         if self._records:
-            self._next_id = max(
-                record["id"] for record in self._records
-            ) + 1
+            self._next_id = max(record["id"] for record in self._records) + 1
         else:
             self._next_id = 1
 
