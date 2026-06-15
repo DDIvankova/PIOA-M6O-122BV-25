@@ -94,5 +94,5 @@ src\db\backend\memory.py        31      3    90%
 src\db\backend\table.py        117      3    97%
 src\db\tui.py                  403     83    79%
 ------------------------------------------------
-TOTAL                          700    112    84%
+TOTAL                          700    112    81%
 ```
