@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Any, Dict, Type
+from typing import Any, Dict, Type, Optional, Union
 from .database import Database
 from .errors import (
     TableNotFoundError,
@@ -48,17 +48,8 @@ class FileDatabase(Database):
             )
 
         schema: Dict[str, Type] = {}
-        for field_name, field_type in data["schema"].items():
-            if field_type == "int":
-                schema[field_name] = int
-            elif field_type == "str":
-                schema[field_name] = str
-            elif field_type == "bool":
-                schema[field_name] = bool
-            else:
-                raise InvalidStorageDataError(
-                    f"Неизвестный тип поля '{field_name}': {field_type}"
-                )
+        for field_name, field_type_str in data["schema"].items():
+            schema[field_name] = self._deserialize_type(field_type_str)
 
         table = Table(table_name, schema)
         restored_records = []
@@ -66,8 +57,8 @@ class FileDatabase(Database):
         for record in data["records"]:
             converted_record: Dict[str, Any] = {}
             for key, value in record.items():
+                field_type = schema.get(key)
                 try:
-                    field_type = schema.get(key)
                     if field_type is int:
                         converted_record[key] = (
                             int(value) if value is not None else None
@@ -76,6 +67,21 @@ class FileDatabase(Database):
                         converted_record[key] = (
                             bool(value) if value is not None else False
                         )
+                    elif (
+                        hasattr(field_type, "__origin__")
+                        and field_type.__origin__ is Union
+                    ):
+                        if value is not None:
+                            args = field_type.__args__
+                            non_none = [arg for arg in args if arg is not type(None)]
+                            if non_none and non_none[0] is int:
+                                converted_record[key] = int(value)
+                            elif non_none and non_none[0] is bool:
+                                converted_record[key] = bool(value)
+                            else:
+                                converted_record[key] = str(value)
+                        else:
+                            converted_record[key] = None
                     else:
                         converted_record[key] = value
                 except (TypeError, ValueError) as e:
@@ -91,7 +97,7 @@ class FileDatabase(Database):
         table_path = self._get_table_path(table_name)
         schema_info: Dict[str, str] = {}
         for field_name, field_type in table.schema.items():
-            schema_info[field_name] = field_type.__name__
+            schema_info[field_name] = self._serialize_type(field_type)
         data = {"schema": schema_info, "records": table.get_all()}
         try:
             with table_path.open("w", encoding="utf-8") as f:
@@ -145,11 +151,36 @@ class FileDatabase(Database):
     def drop_table(self, table_name: str) -> None:
         table_path = self._get_table_path(table_name)
         if table_path.exists():
-            try:
-                table_path.unlink()
-            except OSError as e:
-                raise StorageError(f"Не удалось удалить таблицу '{table_name}': {e}")
-            if table_name in self._tables_cache:
-                del self._tables_cache[table_name]
+            table_path.unlink()
         else:
             raise TableNotFoundError(f"Таблица '{table_name}' не существует")
+        
+    def _serialize_type(self, field_type: Type) -> str:
+        if hasattr(field_type, "__origin__") and field_type.__origin__ is Union:
+            args = field_type.__args__
+            non_none = [arg for arg in args if arg is not type(None)]
+            if len(non_none) == 1:
+                return f"optional_{self._serialize_type(non_none[0])}"
+        if field_type is int:
+            return "int"
+        elif field_type is str:
+            return "str"
+        elif field_type is bool:
+            return "bool"
+        else:
+            return "str"
+
+    def _deserialize_type(self, type_str: str) -> Type:
+        if type_str.startswith("optional_"):
+            inner = self._deserialize_type(type_str[9:])
+            return Optional[inner]
+        if type_str == "int":
+            return int
+        elif type_str == "str":
+            return str
+        elif type_str == "bool":
+            return bool
+        elif type_str == "Union":
+            return Optional[str]
+        else:
+            return str

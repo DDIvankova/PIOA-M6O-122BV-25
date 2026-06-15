@@ -54,7 +54,7 @@ class LibraryUI:
             "book_id": int,
             "reader_id": int,
             "loan_date": str,
-            "return_date": Optional[str],
+            "return_date": str,
         }
         try:
             self.db.create_table("books", books_schema)
@@ -250,7 +250,7 @@ class LibraryUI:
                 "book_id": book_id,
                 "reader_id": reader_id,
                 "loan_date": str(date.today()),
-                "return_date": None,
+                "return_date": "",
             }
             result = self.db.insert_record("loans", record)
             print(f"\nВыдача успешно добавлена (ID: {result['id']})")
@@ -356,7 +356,13 @@ class LibraryUI:
                     if isinstance(value, bool):
                         updates[key] = new_value.lower() in ("да", "yes", "true", "1")
                     elif isinstance(value, int):
-                        updates[key] = int(new_value)
+                        try:
+                            updates[key] = int(new_value)
+                        except ValueError:
+                            print(
+                                f"Ошибка: для поля '{key}' нужно ввести целое число. Значение не изменено."
+                            )
+                            continue
                     else:
                         updates[key] = new_value
         if updates:
