@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+.coverage
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+data/*.json
+*.log
+.DS_Store
+
+# Test outputs
+.coverage
+.pytest_cache/
