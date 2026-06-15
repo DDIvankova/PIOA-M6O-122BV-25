@@ -67,10 +67,7 @@ class FileDatabase(Database):
                         converted_record[key] = (
                             bool(value) if value is not None else False
                         )
-                    elif (
-                        hasattr(field_type, "__origin__")
-                        and field_type.__origin__ is Union
-                    ):
+                    elif getattr(field_type, "__origin__", None) is Union:
                         if value is not None:
                             args = field_type.__args__
                             non_none = [arg for arg in args if arg is not type(None)]
@@ -154,9 +151,10 @@ class FileDatabase(Database):
             table_path.unlink()
         else:
             raise TableNotFoundError(f"Таблица '{table_name}' не существует")
-        
+
     def _serialize_type(self, field_type: Type) -> str:
-        if hasattr(field_type, "__origin__") and field_type.__origin__ is Union:
+        origin = getattr(field_type, "__origin__", None)
+        if origin is Union:
             args = field_type.__args__
             non_none = [arg for arg in args if arg is not type(None)]
             if len(non_none) == 1:
